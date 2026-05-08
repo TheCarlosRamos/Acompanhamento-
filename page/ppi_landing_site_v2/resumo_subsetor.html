@@ -791,7 +791,7 @@
           const setor = translate(project.setor || ''); // Aplicar tradução
           const desc = project.descricao_do_projeto || project.descricao_curta || '';
           const situ = project.status_atual_do_projeto || '—';
-          const deliberacao = project.deliberacao || '—';
+          const deliberacao = project.proximas_etapas || '—';
           const riscos = project.questoes_chaves || '';
           const lat = parseFloat(project.latitude), lon = parseFloat(project.longitude);
           
@@ -1027,7 +1027,7 @@
       const setor = translate(project.setor || ''); // Aplicar tradução
       const desc = project.descricao_do_projeto || project.descricao_curta || '';
       const situ = project.status_atual_do_projeto || '—';
-      const deliberacao = project.deliberacao || '—';
+      const deliberacao = project.proximas_etapas || '—';
       const riscos = project.questoes_chaves || '';
       const lat = parseFloat(project.latitude), lon = parseFloat(project.longitude);
       
