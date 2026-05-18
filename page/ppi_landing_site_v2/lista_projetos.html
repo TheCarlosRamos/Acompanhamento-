@@ -89,6 +89,7 @@
       .location { font-size: 0.75rem; }
     }
   </style>
+  <script src="favorites-api.js"></script>
 </head>
 
 <body>
@@ -189,13 +190,14 @@
     }
 
     // Variáveis globais
-    let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    let favorites = [];
     let allProjects = [];
 
     // Inicialização
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       bindUI();
-      loadProjects();
+      await loadFavorites();
+      await loadProjects();
     });
 
     function bindUI() {
@@ -249,7 +251,11 @@
       });
     }
 
-    function renderProjects(projects) {
+    async function loadFavorites() {
+      favorites = await window.favoritesApi.loadFavorites();
+    }
+
+    function renderProjects(projects) { 
       const container = $('#projectsList');
       if (!projects || projects.length === 0) {
         container.innerHTML = `
@@ -319,27 +325,24 @@
     }
 
     // Favoritos
-    function toggleFavorite(guid) {
+    async function toggleFavorite(guid) {
       const idx = favorites.indexOf(guid);
+      const add = idx === -1;
+      favorites = await window.favoritesApi.setFavorite(guid, add);
       const btn = document.querySelector(`div[data-guid="${guid}"] .favorite-btn`);
-
-      if (idx > -1) {
-        favorites.splice(idx, 1);
-        if (btn) { btn.classList.remove('active'); btn.textContent = '☆'; }
-      } else {
-        favorites.push(guid);
-        if (btn) { btn.classList.add('active'); btn.textContent = '★'; }
+      if (btn) {
+        btn.classList.toggle('active', add);
+        btn.textContent = add ? '★' : '☆';
+        btn.setAttribute('aria-label', add ? 'Remover dos favoritos' : 'Adicionar aos favoritos');
+        btn.setAttribute('title', add ? 'Remover dos favoritos' : 'Adicionar aos favoritos');
       }
-
-      localStorage.setItem('favorites', JSON.stringify(favorites));
       updateStats();
     }
 
-    function clearFavorites() {
+    async function clearFavorites() { 
       if (!favorites.length) return;
       if (confirm('Tem certeza que deseja remover todos os favoritos?')) {
-        favorites = [];
-        localStorage.setItem('favorites', JSON.stringify(favorites));
+        favorites = await window.favoritesApi.clearFavorites();
         document.querySelectorAll('.favorite-btn').forEach(btn => {
           btn.classList.remove('active');
           btn.textContent = '☆';

@@ -333,6 +333,7 @@
       margin: 1rem 0;
     }
   </style>
+  <script src="favorites-api.js"></script>
 </head>
 <body>
   <header class="back-navigation">
@@ -582,7 +583,7 @@
 
     // Variáveis globais
     let allProjects = [];
-    let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    let favorites = [];
     let currentSubsetor = '';
     let currentSubsecretaria = '';
     let subsetores = [];
@@ -615,10 +616,15 @@
 
     // Inicialização
     document.addEventListener('DOMContentLoaded', async function() {
+      await loadFavorites();
       await loadProjects();
       setupSubsetorSelector();
       // Não chamar changeSubsetor automaticamente - aguardar seleção do usuário
     });
+
+    async function loadFavorites() {
+      favorites = await window.favoritesApi.loadFavorites();
+    }
 
     async function loadProjects() {
       try {
@@ -996,16 +1002,9 @@
     }
 
     // Função para alternar favoritos
-    function toggleFavorite(guid) {
-      const index = favorites.indexOf(guid);
-      if (index > -1) {
-        favorites.splice(index, 1);
-      } else {
-        favorites.push(guid);
-      }
-      localStorage.setItem('favorites', JSON.stringify(favorites));
-      
-      // Recarregar o conteúdo para atualizar os botões
+    async function toggleFavorite(guid) {
+      const isFavorite = favorites.includes(guid);
+      favorites = await window.favoritesApi.setFavorite(guid, !isFavorite);
       if (currentSubsetor) {
         renderSubsetorContent();
       }

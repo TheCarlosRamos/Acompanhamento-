@@ -97,6 +97,7 @@
       100% { transform: rotate(360deg); }
     }
   </style>
+  <script src="favorites-api.js"></script>
 </head>
 <body>
   <header class="favorites-header">
@@ -229,12 +230,13 @@
 
     // Variáveis globais
     let allProjects = [];
+    let favorites = [];
     let favoriteProjects = [];
 
     // Inicialização
     document.addEventListener('DOMContentLoaded', async function() {
       await loadProjects();
-      loadFavorites();
+      await loadFavorites();
       renderFavorites();
       initMiniMaps();
       setupExportButton();
@@ -250,8 +252,8 @@
       }
     }
 
-    function loadFavorites() {
-      const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    async function loadFavorites() {
+      favorites = await window.favoritesApi.loadFavorites();
       favoriteProjects = allProjects.filter(p => favorites.includes(p.guid));
       updateFavoritesCount();
     }
