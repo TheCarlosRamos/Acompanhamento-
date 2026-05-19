@@ -1122,55 +1122,16 @@
               
               L.marker([lat, lon]).addTo(map);
               
-              // Converter para imagem estática após carregar
+              // Manter mapa interativo no modal (não converter para imagem estática)
               setTimeout(() => {
-                const canvas = document.createElement('canvas');
-                const size = 300;
-                canvas.width = size * 2;
-                canvas.height = size * 2;
-                canvas.style.width = size + 'px';
-                canvas.style.height = size + 'px';
-                const ctx = canvas.getContext('2d');
-                ctx.scale(2, 2);
-
-                html2canvas(el, {
-                  canvas: canvas,
-                  backgroundColor: '#ffffff',
-                  scale: 1
-                }).then(canvasMap => {
-                  const img = new Image();
-                  img.onload = () => {
-                    ctx.drawImage(img, 0, 0, size, size);
-                    
-                    // Adicionar círculo no centro (marcador)
-                    const centerX = size / 2;
-                    const centerY = size / 2;
-                    ctx.beginPath();
-                    ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
-                    ctx.fillStyle = '#3B82F6';
-                    ctx.globalAlpha = 0.95;
-                    ctx.fill();
-                    ctx.globalAlpha = 1.0;
-                    
-                    // Converter para imagem
-                    const finalImg = document.createElement('img');
-                    finalImg.src = canvas.toDataURL('image/png');
-                    finalImg.alt = 'Mapa estático';
-                    finalImg.style.width = '100%';
-                    finalImg.style.height = '100%';
-                    finalImg.style.display = 'block';
-                    
-                    el.innerHTML = '';
-                    el.appendChild(finalImg);
-                    
-                    try { map.remove(); } catch(e){}
-                    el._leaflet_map = null;
-                  };
-                  img.src = canvasMap.toDataURL('image/png');
-                }).catch(err => {
-                  console.error('Erro ao gerar mapa:', err);
-                });
-              }, 1000);
+                try {
+                  map.invalidateSize();
+                  // Guardar a instância para possivelmente capturar/fechar depois
+                  el._leaflet_map = map;
+                } catch (err) {
+                  console.error('Erro ao ajustar mapa no modal:', err);
+                }
+              }, 200);
             }
           });
         }, 100);
@@ -1180,6 +1141,24 @@
     // Função para fechar modal de projeto
     function closeProjectModal() {
       const modal = document.getElementById('projectModal');
+      // Remover instâncias de mapas do conteúdo do modal para liberar memória
+      try {
+        const content = document.getElementById('projectModalContent');
+        if (content) {
+          const maps = content.querySelectorAll('.mini-map');
+          maps.forEach(el => {
+            if (el._leaflet_map) {
+              try { el._leaflet_map.remove(); } catch(e){}
+              el._leaflet_map = null;
+            }
+            // limpar conteúdo para evitar visualizações duplicadas
+            el.innerHTML = '';
+          });
+        }
+      } catch (e) {
+        console.error('Erro ao limpar mapas do modal:', e);
+      }
+
       modal.style.display = 'none';
     }
 
