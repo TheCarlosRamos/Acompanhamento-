@@ -255,7 +255,7 @@
     }
     let desc = resumirDescricao(p.descricao_do_projeto || p.descricao_curta || '');
     const situ = p.status_atual_do_projeto || '—';
-    const deliberacao = p.deliberacao || '—';
+    const proximasEtapas = p.proximas_etapas || p.deliberacao || '—';
     const riscos = p.questoes_chaves || '';
     const lat = parseFloat(p.latitude), lon = parseFloat(p.longitude);
     
@@ -305,7 +305,7 @@
 
             <div class="info-small">
               <h5>Próximos Passos</h5>
-              <p>${esc(deliberacao)}</p>
+              <p>${esc(proximasEtapas)}</p>
             </div>
           </div>
 
