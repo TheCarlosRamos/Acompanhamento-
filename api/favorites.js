@@ -22,7 +22,8 @@ async function sendRedisCommand(command) {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${REDIS_REST_TOKEN}`
     },
-    body: JSON.stringify({ command })
+    // Upstash Redis REST expects the request body to be a JSON array of command arguments.
+    body: JSON.stringify(command)
   });
 
   const data = await response.json();
