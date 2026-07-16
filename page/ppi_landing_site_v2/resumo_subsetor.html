@@ -8,7 +8,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="ppi.css" />
-  <link rel="stylesheet" href="chatbot.css" />
   <style>
     .subsetor-header {
       background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);
@@ -261,7 +260,7 @@
       gap: 1rem;
       margin-bottom: 2rem;
       width: 100%;
-      align-items: stretch; /* Garante que todos os cards tenham a mesma altura */
+      align-items: stretch;
     }
     
     @media (min-width: 1200px) {
@@ -431,7 +430,6 @@
 
     // Dicionário de traduções
     const translations = {
-      // Subsetores
       'Highway': 'Rodovia',
       'Seaport': 'Porto Marítimo',
       'Intercity Rail': 'Ferrovia Intercidades',
@@ -441,8 +439,6 @@
       'Other Water & Waste': 'Outros Água e Resíduos',
       'Other Energy': 'Outra Energia',
       'Other': 'Outros',
-      
-      // Subsetores adicionais que faltavam
       'Airport': 'Aeroporto',
       'Hospital': 'Hospital',
       'Housing': 'Habitação',
@@ -454,23 +450,17 @@
       'Transmission Line': 'Linha de Transmissão',
       'Waste Water Treatment': 'Tratamento de Águas Residuais',
       'Water Supply Infrastructure': 'Infraestrutura de Abastecimento de Água',
-      
-      // Setores
       'Transport': 'Transporte',
       'Social Infrastructure': 'Infraestrutura Social',
       'Water & Waste': 'Água e Resíduos',
       'Urban Services': 'Serviços Urbanos',
       'Energy': 'Energia',
-      
-      // Outros termos
       'Completed': 'Concluído',
       'In Progress': 'Em Andamento',
       'Not Started': 'Não Iniciado',
       'Pending': 'Pendente',
       'Active': 'Ativo',
       'Inactive': 'Inativo',
-      
-      // Status e situações que podem aparecer
       'Em execução': 'Em execução',
       'Concluído': 'Concluído',
       'Paralisado': 'Paralisado',
@@ -480,7 +470,6 @@
       'Suspenso': 'Suspenso'
     };
 
-    // Função de tradução
     function translate(text) {
       if (!text) return text;
       return translations[text] || text;
@@ -496,7 +485,6 @@
         : cortado + '...';
     }
 
-    // Timeline de etapas (copiado do app.js)
     const phaseCols = [
       ['Estudos','status_dos_estudos'],['Consulta Pública','status_consulta_publica'],['TCU','status_do_tcu'],['Edital','status_do_edital'],['Leilão','status_do_leilao'],['Contrato','status_do_contrato']
     ];
@@ -556,7 +544,6 @@
       </div>`;
     }
 
-    // Template simplificado para resumo - apenas nome e timeline com favorito e clique para modal
     function cardTemplate(p){ 
       const nome = p.nome_completo || p.nome_projeto || 'Projeto';
       const isFavorite = favorites.includes(p.guid);
@@ -572,7 +559,6 @@
           </div>
         </div>
         
-        <!-- Botão de favorito na parte inferior -->
         <button onclick="event.stopPropagation(); toggleFavorite('${p.guid}')" style="position: absolute; bottom: 0.5rem; right: 0.5rem; background: ${isFavorite ? '#fbbf24' : 'rgba(255,255,255,0.2)'}; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="${isFavorite ? '#fff' : '#fff'}" stroke="currentColor" stroke-width="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -581,7 +567,6 @@
       </article>`;
     }
 
-    // Variáveis globais
     let allProjects = [];
     let favorites = [];
     let currentSubsetor = '';
@@ -592,17 +577,15 @@
     let currentModalPage = 0;
     let currentProjectsPage = 0;
     
-    // Cards por página dinâmico baseado na largura da tela
     function getCardsPerPage() {
       const width = window.innerWidth;
-      if (width >= 1600) return 18; // 3 colunas × 6 linhas
-      if (width >= 1200) return 18; // 3 colunas × 6 linhas  
-      return 15; // Auto-fit com 400px mínimo (aprox. 3 colunas × 5 linhas)
+      if (width >= 1600) return 18;
+      if (width >= 1200) return 18;
+      return 15;
     }
     
     let CARDS_PER_PAGE = getCardsPerPage();
     
-    // Atualizar quando redimensionar
     window.addEventListener('resize', () => {
       const newCardsPerPage = getCardsPerPage();
       if (newCardsPerPage !== CARDS_PER_PAGE) {
@@ -614,12 +597,10 @@
       }
     });
 
-    // Inicialização
     document.addEventListener('DOMContentLoaded', async function() {
       await loadFavorites();
       await loadProjects();
       setupSubsetorSelector();
-      // Não chamar changeSubsetor automaticamente - aguardar seleção do usuário
     });
 
     async function loadFavorites() {
@@ -628,15 +609,12 @@
 
     async function loadProjects() {
       try {
-        const response = await fetch('data/projects_full.json');
+        const response = await fetch('api/projects.php');
         allProjects = await response.json();
         
-        // Extrair subsetores únicos
         subsetores = [...new Set(allProjects.map(p => p.subsetor).filter(Boolean))].sort();
         console.log('Subsetores encontrados:', subsetores);
-        console.log('Subsetores traduzidos:', subsetores.map(s => translate(s)));
         
-        // Extrair subsecretarias únicas
         subsecretarias = [...new Set(allProjects.map(p => p.subsecretaria).filter(Boolean))].sort();
         console.log('Subsecretarias encontradas:', subsecretarias);
         
@@ -650,7 +628,6 @@
       const subsetorSelector = document.getElementById('subsetorSelect');
       const subsecretariaSelector = document.getElementById('subsecretariaSelect');
       
-      // Configurar selector de subsecretaria primeiro
       subsecretariaSelector.innerHTML = '<option value="">Selecione uma subsecretaria...</option>';
       subsecretarias.forEach(subsecretaria => {
         const option = document.createElement('option');
@@ -659,7 +636,6 @@
         subsecretariaSelector.appendChild(option);
       });
       
-      // Inicialmente, o selector de subsetor fica vazio
       subsetorSelector.innerHTML = '<option value="">Primeiro selecione uma subsecretaria</option>';
       subsetorSelector.disabled = true;
       
@@ -672,17 +648,15 @@
       const subsetorSelector = document.getElementById('subsetorSelect');
       
       currentSubsecretaria = subsecretariaSelector.value;
-      currentSubsetor = ''; // Reset subsetor quando subsecretaria muda
+      currentSubsetor = '';
       
       if (!currentSubsecretaria) {
-        // Se nenhuma subsecretaria selecionada, desabilitar subsetor
         subsetorSelector.innerHTML = '<option value="">Primeiro selecione uma subsecretaria</option>';
         subsetorSelector.disabled = true;
         showEmpty();
         return;
       }
       
-      // Filtrar subsetores que têm projetos nesta subsecretaria
       const availableSubsetores = [...new Set(
         allProjects
           .filter(p => p.subsecretaria === currentSubsecretaria)
@@ -690,7 +664,6 @@
           .filter(Boolean)
       )].sort();
       
-      // Configurar selector de subsetor com os subsetores disponíveis
       subsetorSelector.innerHTML = '<option value="">Selecione um subsetor...</option>';
       availableSubsetores.forEach(subsetor => {
         const option = document.createElement('option');
@@ -701,7 +674,6 @@
       
       subsetorSelector.disabled = false;
       
-      // Se há apenas um subsetor disponível, selecioná-lo automaticamente
       if (availableSubsetores.length === 1) {
         subsetorSelector.value = availableSubsetores[0];
         changeSubsetor();
@@ -712,7 +684,6 @@
 
     function changeSubsetor() {
       const subsetorSelector = document.getElementById('subsetorSelect');
-      
       currentSubsetor = subsetorSelector.value;
       
       if (!currentSubsetor) {
@@ -726,15 +697,12 @@
     function renderSubsetorContent() {
       const content = document.getElementById('content');
       
-      // Filtrar projetos do subsetor e subsecretaria
       let subsetorProjects = allProjects.filter(p => p.subsetor === currentSubsetor);
       
-      // Aplicar filtro adicional de subsecretaria se selecionada
       if (currentSubsecretaria) {
         subsetorProjects = subsetorProjects.filter(p => p.subsecretaria === currentSubsecretaria);
       }
       
-      // Calcular estatísticas do subsetor completo (mesmo para todas as folhas)
       const subsetorStats = calculateStats(subsetorProjects);
       const subsetorEtapasStatsHtml = Object.entries(subsetorStats.etapasStats).map(([etapa, count]) => `
         <div class="etapa-stat">
@@ -743,25 +711,19 @@
         </div>
       `).join('');
       
-      // Calcular número de folhas (slides)
       const totalFolhas = Math.ceil(subsetorProjects.length / CARDS_PER_PAGE);
       
       console.log('RenderSubsetorContent - Projetos encontrados:', subsetorProjects.length);
       console.log('Total de folhas:', totalFolhas);
       
-      // Gerar HTML de todas as folhas azuis
       const folhasHtml = [];
       for (let folhaIndex = 0; folhaIndex < totalFolhas; folhaIndex++) {
         const startIndex = folhaIndex * CARDS_PER_PAGE;
         const endIndex = Math.min(startIndex + CARDS_PER_PAGE, subsetorProjects.length);
         const folhaProjects = subsetorProjects.slice(startIndex, endIndex);
         
-        console.log(`Folha ${folhaIndex + 1}: projetos ${startIndex + 1}-${endIndex} de ${subsetorProjects.length}`);
+        const projectsHtml = renderProjectsGrid(folhaProjects, 0);
         
-        const projectsHtml = renderProjectsGrid(folhaProjects, 0); // Sem paginação individual
-        console.log('HTML dos projetos gerado:', projectsHtml.length > 0 ? 'Sim' : 'Não');
-        
-        // Todas as folhas usam as mesmas estatísticas do subsetor completo
         const statsSection = `
           <div class="stats-container" style="margin-bottom: 1.5rem;">
             <div class="etapas-stats">
@@ -787,26 +749,22 @@
         `);
       }
       
-      // Adicionar folha de favoritos se houver projetos favoritados neste subsetor
       const subsetorFavorites = subsetorProjects.filter(p => favorites.includes(p.guid));
       if (subsetorFavorites.length > 0) {
-        // Criar uma folha para cada projeto favorito com o card completo
         subsetorFavorites.forEach((project, index) => {
-          // Gerar o card completo do projeto (mesmo estilo do projects.html)
           const nome = project.nome_completo || project.nome_projeto || 'Projeto';
-          const setor = translate(project.setor || ''); // Aplicar tradução
+          const setor = translate(project.setor || '');
           const desc = project.descricao_do_projeto || project.descricao_curta || '';
           const situ = project.status_atual_do_projeto || '—';
           const deliberacao = project.proximas_etapas || '—';
           const riscos = project.questoes_chaves || '';
           const lat = parseFloat(project.latitude), lon = parseFloat(project.longitude);
           
-          // bloco do mini-mapa
           const hasCoords = !isNaN(lat) && !isNaN(lon);
           const miniMapBlock = hasCoords
             ? `
             <div class="info-small">
-              <h5>Mapa (nível: <span class="loc-level">${(window.LOC_LEVEL||'state')}</span>)</h5>
+              <h5>Mapa</h5>
               <div class="mini-map"
                    data-lat="${lat}"
                    data-lon="${lon}">
@@ -911,7 +869,6 @@
       
       content.innerHTML = `
         <div class="document-container">
-          <!-- Folhas azuis com projetos e estatísticas ao lado -->
           <div class="folhas-container">
             ${folhasHtml.join('')}
           </div>
@@ -920,13 +877,10 @@
       
       console.log('Conteúdo renderizado no DOM');
       
-      // Inicializar mapas nos favoritos logo após renderizar
       setTimeout(() => {
         console.log('Renderizando mapas nos favoritos...');
         renderMiniMaps();
       }, 500);
-      
-      // Cards simplificados não precisam de inicialização de mapas
     }
 
     function calculateStats(projects) {
@@ -940,7 +894,6 @@
         return lastIdx >= 0 && lastIdx < phaseCols.length - 1;
       }).length;
       
-      // Calcular estatísticas por etapa (contagem excludente)
       const etapasStats = {};
       phaseCols.forEach(([phaseName, statusField]) => {
         etapasStats[phaseName] = 0;
@@ -949,7 +902,6 @@
       projects.forEach(project => {
         const lastIdx = lastCompletedIdx(project);
         if (lastIdx >= 0) {
-          // Contar apenas na última etapa concluída
           const lastPhaseName = phaseCols[lastIdx][0];
           etapasStats[lastPhaseName]++;
         }
@@ -982,662 +934,289 @@
       `;
     }
 
-    // Funções para paginação de projetos gerais
     function renderProjectsGrid(projects, page) {
       const startIndex = page * CARDS_PER_PAGE;
       const endIndex = Math.min(startIndex + CARDS_PER_PAGE, projects.length);
       const currentPageProjects = projects.slice(startIndex, endIndex);
       
-      // Atualizar botões de navegação
       const prevBtn = document.getElementById('projectsPrevBtn');
       const nextBtn = document.getElementById('projectsNextBtn');
       
       if (prevBtn) prevBtn.disabled = page === 0;
       if (nextBtn) nextBtn.disabled = endIndex >= projects.length;
       
-      // Renderizar cards em grade com largura expandida
       return `<div class="cards-grid" style="width: 100%;">
         ${currentPageProjects.map(project => cardTemplate(project)).join('')}
       </div>`;
     }
 
-    // Função para alternar favoritos
+    function renderMiniMaps() {
+      const maps = document.querySelectorAll('.mini-map');
+      maps.forEach(el => {
+        const lat = parseFloat(el.dataset.lat);
+        const lon = parseFloat(el.dataset.lon);
+        if (!isNaN(lat) && !isNaN(lon)) {
+          const map = L.map(el, {
+            center: [lat, lon],
+            zoom: 5,
+            zoomControl: false,
+            attributionControl: false
+          });
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+          L.marker([lat, lon]).addTo(map);
+          el._leaflet_map = map;
+        }
+      });
+    }
+
+    // Funções para modais
+    function openProjectModal(guid) {
+      const project = allProjects.find(p => p.guid === guid);
+      if (!project) return;
+      
+      document.getElementById('projectModalTitle').textContent = project.nome_completo || project.nome_projeto || 'Projeto';
+      
+      const nome = project.nome_completo || project.nome_projeto || 'Projeto';
+      const setor = translate(project.setor || '');
+      const desc = project.descricao_do_projeto || project.descricao_curta || 'Sem descrição disponível';
+      const situ = project.status_atual_do_projeto || '—';
+      const deliberacao = project.proximas_etapas || '—';
+      const riscos = project.questoes_chaves || '';
+      const loc = project.localizacoes || 'Não informada';
+      const lat = parseFloat(project.latitude), lon = parseFloat(project.longitude);
+      
+      const hasCoords = !isNaN(lat) && !isNaN(lon);
+      
+      document.getElementById('projectModalContent').innerHTML = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+          <div>
+            <h3 style="margin-bottom: 1rem;">${esc(nome)}</h3>
+            <p><strong>Setor:</strong> ${esc(setor)}</p>
+            <p><strong>Subsetor:</strong> ${esc(translate(project.subsetor || ''))}</p>
+            <p><strong>Localização:</strong> ${esc(loc)}</p>
+            <p><strong>Situação Atual:</strong> ${esc(translate(situ))}</p>
+            <p><strong>Próximos Passos:</strong> ${esc(deliberacao)}</p>
+            <div style="margin-top: 1rem;">
+              <h4>Descrição</h4>
+              <p>${esc(desc)}</p>
+            </div>
+          </div>
+          <div>
+            ${hasCoords ? `<div id="projectDetailMap" style="height: 300px; border-radius: 0.5rem;"></div>` : '<p>Localização não disponível</p>'}
+            <div style="margin-top: 1rem;">
+              <h4>Timeline de Etapas</h4>
+              ${timelineHTML(project)}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('projectModal').style.display = 'block';
+      
+      if (hasCoords) {
+        setTimeout(() => {
+          const mapEl = document.getElementById('projectDetailMap');
+          if (mapEl) {
+            const map = L.map(mapEl, { center: [lat, lon], zoom: 6 });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            L.marker([lat, lon]).addTo(map);
+          }
+        }, 200);
+      }
+    }
+
+    function closeProjectModal() {
+      document.getElementById('projectModal').style.display = 'none';
+    }
+
+    function openModal(subsetor, subsecretaria) {
+      modalProjects = allProjects.filter(p => p.subsetor === subsetor && (!subsecretaria || p.subsecretaria === subsecretaria));
+      currentModalPage = 0;
+      
+      document.getElementById('modalTitle').textContent = `Projetos: ${translate(subsetor)}`;
+      document.getElementById('cardsModal').style.display = 'block';
+      
+      renderModalPage();
+    }
+
+    function closeModal() {
+      document.getElementById('cardsModal').style.display = 'none';
+    }
+
+    function renderModalPage() {
+      const container = document.getElementById('modalCardsContainer');
+      const startIndex = currentModalPage * CARDS_PER_PAGE;
+      const endIndex = Math.min(startIndex + CARDS_PER_PAGE, modalProjects.length);
+      const pageProjects = modalProjects.slice(startIndex, endIndex);
+      
+      document.getElementById('modalInfo').textContent = `Mostrando projetos ${startIndex + 1}-${endIndex} de ${modalProjects.length}`;
+      
+      container.innerHTML = `<div class="cards-grid">
+        ${pageProjects.map(project => cardTemplate(project)).join('')}
+      </div>`;
+      
+      document.getElementById('prevBtn').disabled = currentModalPage === 0;
+      document.getElementById('nextBtn').disabled = endIndex >= modalProjects.length;
+    }
+
+    function changeModalPage(delta) {
+      currentModalPage += delta;
+      renderModalPage();
+    }
+
+    // Favoritos
     async function toggleFavorite(guid) {
-      const isFavorite = favorites.includes(guid);
-      favorites = await window.favoritesApi.setFavorite(guid, !isFavorite);
+      const idx = favorites.indexOf(guid);
+      const add = idx === -1;
+      favorites = await window.favoritesApi.setFavorite(guid, add);
+      
+      // Re-renderizar se estamos em um subsetor
       if (currentSubsetor) {
         renderSubsetorContent();
       }
     }
 
-    // Função para abrir modal de detalhes do projeto
-    function openProjectModal(guid) {
-      const project = allProjects.find(p => p.guid === guid);
-      if (!project) return;
-      
-      const modal = document.getElementById('projectModal');
-      const title = document.getElementById('projectModalTitle');
-      const content = document.getElementById('projectModalContent');
-      
-      title.textContent = project.nome_completo || project.nome_projeto || 'Projeto';
-      
-      // Usar exatamente o mesmo template do projects.html
-      const nome = project.nome_completo || project.nome_projeto || 'Projeto';
-      const setor = translate(project.setor || ''); // Aplicar tradução
-      const desc = project.descricao_do_projeto || project.descricao_curta || '';
-      const situ = project.status_atual_do_projeto || '—';
-      const deliberacao = project.proximas_etapas || '—';
-      const riscos = project.questoes_chaves || '';
-      const lat = parseFloat(project.latitude), lon = parseFloat(project.longitude);
-      
-      // bloco do mini-mapa
-      const hasCoords = !isNaN(lat) && !isNaN(lon);
-      const miniMapBlock = hasCoords
-        ? `
-        <div class="info-small">
-          <h5>Mapa (nível: <span class="loc-level">${(window.LOC_LEVEL||'state')}</span>)</h5>
-          <div class="mini-map"
-               data-lat="${lat}"
-               data-lon="${lon}">
-          </div>
-        </div>`
-        : `
-        <div class="info-small">
-          <h5>Mapa</h5>
-          <p>Localização não disponível</p>
-        </div>`;
-      
-      const riscosList = riscos ? 
-        riscos.split(/\n|;|•/).filter(x => x.trim()).map(x => `<li>${esc(x.trim())}</li>`).join('') : 
-        '<li>Nenhum ponto de atenção identificado</li>';
-      
-      content.innerHTML = `
-        <article class="card">
-          <div class="card-header">
-            <div style="display: flex; justify-content: space-between; align-items: start;">
-              <div>
-                <p style="color: #6b7280; font-size: 14px; margin: 0 0 8px 0;">${esc(setor)}</p>
-                <h3 style="color: #1f2937; font-size: 20px; margin: 0; font-weight: 700;">${esc(nome)}</h3>
-              </div>
-            </div>
-          </div>
-
-          <div class="project-info-grid">
-            <div class="left-col">
-              <div class="info-large description">
-                <h4>Descrição</h4>
-                <p>${esc(desc)}</p>
-              </div>
-
-              <div class="row-2cols">
-                <div class="info-small">
-                  <h5>Situação Atual</h5>
-                  <p>${esc(situ)}</p>
-                </div>
-
-                <div class="info-small">
-                  <h5>Próximos Passos</h5>
-                  <p>${esc(deliberacao)}</p>
-                </div>
-              </div>
-
-              <div class="info-large">
-                <h4>Pontos de Atenção</h4>
-                <ul class="list-disc list-inside space-y-1 text-gray-700">
-                  ${riscosList}
-                </ul>
-              </div>
-            </div>
-
-            <div class="right-col">
-              ${miniMapBlock}
-            </div>
-
-            <div class="timeline-col">
-              <h4>ETAPA</h4>
-              ${timelineHTML(project)}
-            </div>
-          </div>
-        </article>
-      `;
-      
-      modal.style.display = 'flex';
-      
-      // Inicializar mapa se houver coordenadas
-      if (hasCoords) {
-        setTimeout(() => {
-          const mapElements = content.querySelectorAll('.mini-map');
-          mapElements.forEach(el => {
-            const lat = parseFloat(el.dataset.lat);
-            const lon = parseFloat(el.dataset.lon);
-            if (!isNaN(lat) && !isNaN(lon)) {
-              const map = L.map(el, {
-                zoomControl: false,
-                attributionControl: false
-              }).setView([lat, lon], 13);
-              
-              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-              }).addTo(map);
-              
-              L.marker([lat, lon]).addTo(map);
-              
-              // Manter mapa interativo no modal (não converter para imagem estática)
-              setTimeout(() => {
-                try {
-                  map.invalidateSize();
-                  // Guardar a instância para possivelmente capturar/fechar depois
-                  el._leaflet_map = map;
-                } catch (err) {
-                  console.error('Erro ao ajustar mapa no modal:', err);
-                }
-              }, 200);
-            }
-          });
-        }, 100);
+    // Exportar PDF
+    async function exportToPDF() {
+      const content = document.getElementById('content');
+      if (!content || content.querySelector('.loading')) {
+        alert('Nenhum conteúdo disponível para exportar. Selecione um subsetor primeiro.');
+        return;
       }
-    }
-
-    // Função para fechar modal de projeto
-    function closeProjectModal() {
-      const modal = document.getElementById('projectModal');
-      // Remover instâncias de mapas do conteúdo do modal para liberar memória
-      try {
-        const content = document.getElementById('projectModalContent');
-        if (content) {
-          const maps = content.querySelectorAll('.mini-map');
-          maps.forEach(el => {
-            if (el._leaflet_map) {
-              try { el._leaflet_map.remove(); } catch(e){}
-              el._leaflet_map = null;
-            }
-            // limpar conteúdo para evitar visualizações duplicadas
-            el.innerHTML = '';
-          });
-        }
-      } catch (e) {
-        console.error('Erro ao limpar mapas do modal:', e);
-      }
-
-      modal.style.display = 'none';
-    }
-
-    // Função para formatar moeda
-    function formatCurrency(value) {
-      if (!value) return 'N/A';
-      return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-      }).format(value);
-    }
-
-    // Fechar modal ao clicar fora
-    window.onclick = function(event) {
-      const cardsModal = document.getElementById('cardsModal');
-      const projectModal = document.getElementById('projectModal');
       
-      if (event.target === cardsModal) {
-        closeModal();
+      const folhas = content.querySelectorAll('.folha-section');
+      if (!folhas.length) {
+        alert('Nenhum conteúdo disponível para exportar.');
+        return;
       }
-      if (event.target === projectModal) {
-        closeProjectModal();
-      }
-    }
-
-    // Inicializar mini-mapas (mesma lógica do app.js)
-    function initMiniMaps() {
-      if(typeof L === 'undefined') return;
       
-      const level = window.LOC_LEVEL || 'state';
-      const zoom = getZoomByLevel(level);
-
-      document.querySelectorAll('.mini-map').forEach(async (el) => {
-        const lat = parseFloat(el.getAttribute('data-lat'));
-        const lon = parseFloat(el.getAttribute('data-lon'));
-        if(isNaN(lat) || isNaN(lon)) return;
-
-        // Limpa render anterior
-        if(el._leaflet_map) { try { el._leaflet_map.remove(); } catch(e){} el._leaflet_map = null; }
-        el.innerHTML = '';
-
-        const map = L.map(el, {
-          zoomControl: false,
-          attributionControl: false
-        }).setView([lat, lon], zoom);
-
-        const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 18,
-          crossOrigin: true
-        }).addTo(map);
-
-        // --- IMPORTANTE: forçar renderer canvas no marcador
-        const canvasRenderer = L.canvas({ padding: 0.5 });
-
-        const marker = L.circleMarker([lat, lon], {
-          renderer: canvasRenderer,
-          radius: 6,
-          color: '#1E40AF',
-          weight: 2,
-          fillColor: '#3B82F6',
-          fillOpacity: 0.9
-        }).addTo(map);
-
-        // Aguarda o mapa terminar de desenhar
-        await new Promise((resolve) => {
-          // 'idle' nem sempre dispara em todas as combinações;
-          // garantimos também um pequeno delay após 'load'
-          let done = false;
-          function finish(){ if(done) return; done = true; setTimeout(resolve, 60); }
-          map.once('load', finish);
-          tiles.once('load', finish);
-          // fallback timeout
-          setTimeout(finish, 500);
-        });
-
-        // Ajusta tamanhos e guarda instância
-        map.invalidateSize(false);
-        el._leaflet_map = map;
-
-        const labelSpan = el.closest('.info-small')?.querySelector('.loc-level');
-        if(labelSpan) labelSpan.textContent = level;
+      const pdf = new window.jspdf.jsPDF({
+        orientation: 'landscape',
+        unit: 'pt',
+        format: 'a4'
       });
+      
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      
+      // Adicionar capa
+      const capaImg = new window.Image();
+      capaImg.src = 'assets/CAPA.pptx.png';
+      try {
+        await new Promise((resolve, reject) => {
+          capaImg.onload = resolve;
+          capaImg.onerror = reject;
+        });
+        
+        const capaRatio = capaImg.width / capaImg.height;
+        let capaW = pageWidth * 0.9;
+        let capaH = capaW / capaRatio;
+        if (capaH > pageHeight * 0.9) {
+          capaH = pageHeight * 0.9;
+          capaW = capaH * capaRatio;
+        }
+        pdf.addImage(capaImg, 'PNG', (pageWidth-capaW)/2, 40, capaW, capaH);
+      } catch(e) {
+        // Sem capa, continuar
+      }
+      
+      pdf.addPage();
+      pdf.setFontSize(24);
+      pdf.setTextColor(30, 64, 175);
+      pdf.text('Resumo por Subsetor', pageWidth/2, 60, { align: 'center' });
+      pdf.setFontSize(14);
+      pdf.setTextColor(107, 114, 128);
+      pdf.text(`Subsetor: ${translate(currentSubsetor)}`, pageWidth/2, 85, { align: 'center' });
+      pdf.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')}`, pageWidth/2, 105, { align: 'center' });
+      
+      // Exportar cada folha
+      for (let i = 0; i < folhas.length; i++) {
+        const folha = folhas[i];
+        
+        // Congelar mapas
+        await freezeMaps(folha);
+        
+        const clone = folha.cloneNode(true);
+        clone.classList.add('pdf-export');
+        clone.style.margin = '0';
+        clone.style.borderRadius = '0';
+        clone.style.width = '1800px';
+        
+        const tempDiv = document.createElement('div');
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.left = '-9999px';
+        tempDiv.style.top = '0';
+        tempDiv.appendChild(clone);
+        document.body.appendChild(tempDiv);
+        
+        try {
+          const canvas = await window.html2canvas(clone, {
+            scale: 1.5,
+            useCORS: true,
+            logging: false,
+            width: 1800
+          });
+          
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          
+          let imgWidth = pageWidth * 0.99;
+          let imgHeight = (canvas.height / canvas.width) * imgWidth;
+          if (imgHeight > pageHeight * 0.99) {
+            imgHeight = pageHeight * 0.99;
+            imgWidth = (canvas.width / canvas.height) * imgHeight;
+          }
+          
+          let x = (pageWidth - imgWidth) / 2;
+          let y = (pageHeight - imgHeight) / 2;
+          
+          pdf.addImage(imgData, 'JPEG', x, y, imgWidth, imgHeight);
+        } catch(e) {
+          console.error('Erro ao exportar folha:', e);
+        }
+        
+        document.body.removeChild(tempDiv);
+        
+        if (i < folhas.length - 1) pdf.addPage();
+      }
+      
+      pdf.save(`resumo-${currentSubsetor}-ppi.pdf`);
     }
 
-    // Congela todos os mapas dentro de um container de card (clone) em IMG estática (mesma lógica do app.js)
-    async function freezeMapsForPDF(cardRoot){
-      const maps = Array.from(cardRoot.querySelectorAll('.mini-map'));
-
-      const tasks = maps.map((el) => new Promise((resolve) => {
-        const map = el._leaflet_map;
-        if(!map || typeof window.leafletImage !== 'function'){
-          resolve();
-          return;
-        }
-
-        // Coordenadas do ponto central (as mesmas do dataset do elemento)
-        const lat = parseFloat(el.getAttribute('data-lat'));
-        const lon = parseFloat(el.getAttribute('data-lon'));
-        const hasPoint = !isNaN(lat) && !isNaN(lon);
-
-        // Aguarda um tiquinho caso ainda haja draw pendente
-        setTimeout(() => {
-          try {
-              window.leafletImage(map, function(err, canvas){
-                if(err || !canvas){
-                  resolve();
-                  return;
-                }
-
-                // ---- Fallback: desenha a bolinha manualmente no canvas
-                if(hasPoint){
-                  const pt = map.latLngToContainerPoint([lat, lon]);
-                  const ctx = canvas.getContext('2d');
-
-                  // halo externo (borda)
-                  ctx.beginPath();
-                  ctx.arc(pt.x, pt.y, 7, 0, Math.PI * 2);
-                  ctx.lineWidth = 3;
-                  ctx.strokeStyle = '#1E40AF'; // azul escuro (borda)
-                  ctx.stroke();
-
-                  // preenchimento interno
-                  ctx.beginPath();
-                  ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
-                  ctx.fillStyle = '#3B82F6'; // azul mais claro (preenchimento)
-                  ctx.globalAlpha = 0.95;
-                  ctx.fill();
-                  ctx.globalAlpha = 1.0;
-                }
-
-                // Converte o canvas final para <img>
+    async function freezeMaps(root) {
+      const maps = root.querySelectorAll('.mini-map');
+      const tasks = Array.from(maps).map(el => new Promise(resolve => {
+        try {
+          const map = el._leaflet_map;
+          if (!map) return resolve();
+          
+          setTimeout(() => {
+            try {
+              window.leafletImage(map, (err, canvas) => {
+                if (err || !canvas) return resolve();
                 const img = document.createElement('img');
                 img.src = canvas.toDataURL('image/png');
-                img.alt = 'Mapa estático';
                 img.style.width = '100%';
                 img.style.height = '100%';
                 img.style.display = 'block';
-
-                // Substitui o conteúdo
                 el.innerHTML = '';
                 el.appendChild(img);
-
-                // Remove a instância do mapa
                 try { map.remove(); } catch(e){}
                 el._leaflet_map = null;
-
                 resolve();
               });
-          } catch (e) {
-            resolve();
-          }
-        }, 200);
+            } catch(e) { resolve(); }
+          }, 40);
+        } catch(e) { resolve(); }
       }));
-
       await Promise.all(tasks);
     }
 
-    // Função para obter zoom por nível (mesma do app.js)
-    function getZoomByLevel(level) {
-      if(level === 'coords') return 13;        // coordenadas (mais perto)
-      if(level === 'city') return 11;          // cidade
-      return 9;                                // estado (padrão)
-    }
-
-    // Inicializar mini-mapas - exatamente como no projects.html
-    function renderMiniMaps(){
-      console.log('renderMiniMaps() chamada');
-      if(typeof L === 'undefined') {
-        console.log('Leaflet não carregado');
-        return;
-      }
-
-      const level = window.LOC_LEVEL || 'state';
-      const zoom = getZoomByLevel(level);
-
-      const maps = document.querySelectorAll('.mini-map');
-      console.log('Encontrados', maps.length, 'mapas para inicializar');
-
-      maps.forEach(async (el, index) => {
-        console.log(`Processando mapa ${index + 1}:`, el);
-        const lat = parseFloat(el.getAttribute('data-lat'));
-        const lon = parseFloat(el.getAttribute('data-lon'));
-        console.log(`Coordenadas: ${lat}, ${lon}`);
-        
-        if(isNaN(lat) || isNaN(lon)) {
-          console.log('Coordenadas inválidas, pulando');
-          return;
-        }
-
-        // Limpa render anterior
-        if(el._leaflet_map) { 
-          try { el._leaflet_map.remove(); } catch(e){console.log('Erro ao remover mapa anterior:', e);} 
-          el._leaflet_map = null; 
-        }
-        el.innerHTML = '';
-
-        console.log('Criando mapa Leaflet...');
-        const map = L.map(el, {
-          zoomControl: false,
-          attributionControl: false
-        }).setView([lat, lon], zoom);
-
-        const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 18,
-          crossOrigin: true
-        }).addTo(map);
-
-        // --- IMPORTANTE: forçar renderer canvas no marcador
-        const canvasRenderer = L.canvas({ padding: 0.5 });
-
-        const marker = L.circleMarker([lat, lon], {
-          renderer: canvasRenderer,
-          radius: 6,
-          color: '#1E40AF',
-          weight: 2,
-          fillColor: '#3B82F6',
-          fillOpacity: 0.9
-        }).addTo(map);
-
-        console.log('Mapa e marcador criados, aguardando carregamento...');
-
-        // Aguarda o mapa terminar de desenhar
-        await new Promise((resolve) => {
-          let done = false;
-          function finish(){ 
-            if(done) return; 
-            done = true; 
-            console.log('Mapa carregado'); 
-            setTimeout(resolve, 60); 
-          }
-          map.once('load', finish);
-          tiles.once('load', finish);
-          // fallback timeout
-          setTimeout(() => {
-            if(!done) {
-              console.log('Timeout, considerando carregado');
-              finish();
-            }
-          }, 2000);
-        });
-
-        // Ajusta tamanhos e guarda instância
-        map.invalidateSize(false);
-        el._leaflet_map = map;
-
-        const labelSpan = el.closest('.info-small')?.querySelector('.loc-level');
-        if(labelSpan) labelSpan.textContent = level;
-        
-        console.log(`Mapa ${index + 1} inicializado com sucesso`);
-      });
-    }
-
-    // Função para obter zoom por nível (mesma do app.js)
-    function getZoomByLevel(level) {
-      if(level === 'coords') return 13;        // coordenadas (mais perto)
-      if(level === 'city') return 11;          // cidade
-      return 9;                                // estado (padrão)
-    }
-
-    // Inicializar mini-mapas após renderizar o conteúdo - sem conversão automática
-    setTimeout(() => {
-      console.log('Iniciando renderização de mapas...');
-      renderMiniMaps();
-      
-      // Tentar novamente após um tempo para garantir que os favoritos foram renderizados
-      setTimeout(() => {
-        console.log('Tentativa adicional de renderização de mapas...');
-        renderMiniMaps();
-      }, 3000);
-    }, 1000); // Reduzir tempo e não converter para imagem estática
-
-    // Função auxiliar para capturar com html2canvas
-    async function captureMapWithHTML2Canvas(el, lat, lon) {
-      try {
-        // Usar html2canvas para capturar o mapa
-        const canvas = await html2canvas(el, {
-          backgroundColor: '#ffffff',
-          scale: 2,
-          useCORS: true
-        });
-        
-        // Desenhar marcador no centro se houver coordenadas
-        const ctx = canvas.getContext('2d');
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
-        
-        // Halo externo (borda)
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 14, 0, Math.PI * 2);
-        ctx.lineWidth = 6;
-        ctx.strokeStyle = '#1E40AF';
-        ctx.stroke();
-        
-        // Preenchimento interno
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 10, 0, Math.PI * 2);
-        ctx.fillStyle = '#3B82F6';
-        ctx.globalAlpha = 0.95;
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
-        
-        // Converter para imagem
-        const img = document.createElement('img');
-        img.src = canvas.toDataURL('image/png');
-        img.alt = 'Mapa estático';
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.display = 'block';
-        
-        // Substituir o conteúdo
-        el.innerHTML = '';
-        el.appendChild(img);
-        
-        // Remover instância do mapa
-        if(el._leaflet_map) {
-          try { el._leaflet_map.remove(); } catch(e){}
-          el._leaflet_map = null;
-        }
-        
-      } catch (err) {
-        console.error('Erro ao capturar mapa:', err);
-        // Fallback final: mostrar placeholder simples
-        el.innerHTML = `
-          <div style="background: #f0f0f0; height: 200px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
-            <div style="text-align: center; color: #666;">
-              <div style="font-size: 24px; margin-bottom: 8px;">📍</div>
-              <div style="font-size: 12px;">${lat.toFixed(4)}, ${lon.toFixed(4)}</div>
-              <div style="font-size: 10px; margin-top: 4px;">Localização</div>
-            </div>
-          </div>
-        `;
-      }
-    }
-
-    // Exportar para PDF
-    async function exportToPDF() {
-      if (!currentSubsetor) {
-        alert('Selecione um subsetor primeiro.');
-        return;
-      }
-
-      // Mostrar loading
-      const loadingDiv = document.createElement('div');
-      loadingDiv.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.8);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        z-index: 9999;
-      `;
-      loadingDiv.innerHTML = 'Gerando PDF... Aguarde';
-      document.body.appendChild(loadingDiv);
-
-      try {
-        const pdf = new window.jspdf.jsPDF({
-          orientation: 'landscape',
-          unit: 'pt',
-          format: 'a4'
-        });
-
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        
-        // Capa removida - começar diretamente com as folhas de conteúdo
-        
-        // Capturar cada folha individualmente
-        const folhas = document.querySelectorAll('.folha-section');
-        
-        for (let i = 0; i < folhas.length; i++) {
-          const folha = folhas[i];
-          
-          // Adicionar classe para PDF export
-          folha.classList.add('pdf-export');
-          
-          // Congelar mapas nesta folha antes de capturar
-          await freezeMapsForPDF(folha);
-          
-          // Esperar renderização completa antes de capturar
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Forçar reflow
-          folha.offsetHeight;
-          
-          // Adicionar nova página (exceto para a primeira folha)
-          if (i > 0) {
-            pdf.addPage();
-          }
-          
-          // Capturar a folha
-          try {
-            const canvas = await window.html2canvas(folha, { 
-              scale: 1.5, 
-              useCORS: false,
-              allowTaint: false,
-              backgroundColor: '#1e40af',
-              logging: false,
-              width: folha.offsetWidth,
-              height: folha.offsetHeight,
-              scrollX: 0,
-              scrollY: 0,
-              windowWidth: folha.offsetWidth,
-              windowHeight: folha.offsetHeight,
-              timeout: 10000,
-              foreignObjectRendering: false,
-              imageTimeout: 5000,
-              removeContainer: true,
-              onclone: (clonedDoc) => {
-                // Forçar Arial em todo o documento
-                const style = clonedDoc.createElement('style');
-                style.textContent = `
-                  * { 
-                    font-family: Arial, sans-serif !important; 
-                    -webkit-font-smoothing: antialiased !important;
-                    -moz-osx-font-smoothing: grayscale !important;
-                    text-rendering: optimizeLegibility !important;
-                  }
-                  .card { 
-                    background: rgba(255, 255, 255, 0.95) !important; 
-                    color: #1f2937 !important;
-                  }
-                  .card * { 
-                    color: #1f2937 !important;
-                  }
-                `;
-                clonedDoc.head.appendChild(style);
-                
-                // Remover fontes externas
-                const fontLinks = clonedDoc.querySelectorAll('link[href*="fonts.googleapis.com"]');
-                fontLinks.forEach(link => link.remove());
-                
-                // Forçar renderização de texto
-                setTimeout(() => {
-                  clonedDoc.body.style.visibility = 'visible';
-                  clonedDoc.body.style.opacity = '1';
-                }, 100);
-              }
-            });
-            const imgData = canvas.toDataURL('image/png');
-            
-            // Calcular dimensões para preencher quase toda a página em paisagem
-            const maxW = pageWidth * 0.98;
-            const maxH = pageHeight * 0.98;
-            let ratio = Math.min(maxW / canvas.width, maxH / canvas.height);
-            let imgWidth = canvas.width * ratio;
-            let imgHeight = canvas.height * ratio;
-            
-            let x = (pageWidth - imgWidth) / 2;
-            let y = (pageHeight - imgHeight) / 2;
-            
-            pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
-          } catch (error) {
-            console.error('Erro ao capturar folha', i + 1, ':', error);
-            // Adicionar texto de fallback
-            pdf.setFontSize(12);
-            pdf.setTextColor(107, 114, 128);
-            pdf.text(`Erro ao capturar folha ${i + 1}`, pageWidth/2, pageHeight/2, { align: 'center' });
-          }
-          
-          // Remover classe após captura
-          folha.classList.remove('pdf-export');
-        }
-
-        // Salvar PDF com nome descritivo
-        const fileName = currentSubsecretaria 
-          ? `resumo-${currentSubsetor.toLowerCase().replace(/\s+/g, '-')}-${currentSubsecretaria.toLowerCase().replace(/\s+/g, '-')}-ppi.pdf`
-          : `resumo-${currentSubsetor.toLowerCase().replace(/\s+/g, '-')}-ppi.pdf`;
-        pdf.save(fileName);
-      } finally {
-        // Remover loading
-        document.body.removeChild(loadingDiv);
-      }
-    }
+    window.addEventListener('click', function(event) {
+      const cardsModal = document.getElementById('cardsModal');
+      const projectModal = document.getElementById('projectModal');
+      if (event.target === cardsModal) closeModal();
+      if (event.target === projectModal) closeProjectModal();
+    });
   </script>
 </body>
 </html>
