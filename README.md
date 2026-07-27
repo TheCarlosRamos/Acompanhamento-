@@ -73,7 +73,56 @@ pip install requests pandas
 
 ### 1. Atualizar Dados dos Projetos
 
-Para atualizar todos os projetos (278 projetos):
+#### Atualizar pela planilha Excel da raiz
+
+A aplicação pode ser atualizada mantendo a planilha Excel na raiz do repositório. O fluxo esperado é:
+
+1. Substitua ou atualize o arquivo `Planilha Modelo setembro25.xlsx` na raiz.
+2. Mantenha a estrutura de colunas da planilha.
+3. Rode:
+
+```bash
+python scripts/update_data_from_excel.py
+```
+
+O script lê a aba `Planilha` por padrão, aceita tanto os cabeçalhos com os códigos `2000720`, `2000726`, `2000727`, `2000728`, `2001218`, `2001221`, `2001224`, `2001226`, `2001229`, `2001230`, `2001232` quanto os nomes equivalentes da planilha atual, e atualiza:
+
+- `page/ppi_landing_site_v2/data/projects_full.json`
+- `page/ppi_landing_site_v2/data/metrics.json`
+- `projetos_completos.json`
+
+Durante a conversão, o script também limpa HTML dos campos de descrição e textos longos, removendo tags como `<ul>`, `<li>`, `<p>` e convertendo listas para texto legível.
+
+Se existir `projects_full.xlsx` na raiz, ela será usada automaticamente como planilha complementar para atualizar estes campos quando houver correspondência pelo nome do projeto:
+
+- `Situação Atual` recebe `Status Atual do Projeto`
+- `Próximos Passos` recebe `Próximas Etapas`
+- `Pontos de Atenção` recebe `Questões Chaves`
+- `Localização no mapa` recebe `Latitude` e `Longitude`
+
+Os HTMLs continuam consumindo `projects_full.json` e `metrics.json`; por isso não é necessário alterar o frontend a cada nova planilha.
+
+Se a planilha tiver outro nome ou outra aba:
+
+```bash
+python scripts/update_data_from_excel.py --excel "minha_planilha.xlsx" --sheet "Planilha"
+```
+
+Para informar outra planilha complementar:
+
+```bash
+python scripts/update_data_from_excel.py --complement "projects_full.xlsx"
+```
+
+Para ignorar a planilha complementar:
+
+```bash
+python scripts/update_data_from_excel.py --no-complement
+```
+
+#### Atualizar pela API antiga
+
+Para atualizar todos os projetos pela coleta da API (278 projetos):
 ```bash
 cd scripts
 python update_all_complete.py
