@@ -196,6 +196,22 @@
       font-size: 1rem;
       background: white;
     }
+    .phase-filter { position: relative; }
+    .phase-filter-button {
+      width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem;
+      background: white; color: #374151; font-size: 1rem; text-align: left; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .phase-filter-button::after { content: '▾'; color: #6b7280; }
+    .phase-filter-menu {
+      display: none; position: absolute; z-index: 20; top: calc(100% + 0.35rem); left: 0;
+      width: 100%; min-width: 210px; padding: 0.5rem; border: 1px solid #d1d5db;
+      border-radius: 0.5rem; background: white; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    .phase-filter.is-open .phase-filter-menu { display: block; }
+    .phase-filter-option { display: flex; align-items: center; gap: 0.55rem; padding: 0.45rem 0.5rem; border-radius: 0.35rem; cursor: pointer; }
+    .phase-filter-option:hover { background: #eff6ff; }
+    .phase-filter-option input { width: 1rem; height: 1rem; accent-color: #1e40af; }
     .view-cards-btn {
       background: #10b981;
       color: white;
@@ -351,7 +367,7 @@
 
   <div class="subsetor-selector">
     <div class="header__inner">
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: end;">
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items: end;">
         <div>
           <label for="subsecretariaSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
             Selecione a Subsecretaria:
@@ -367,6 +383,22 @@
           <select id="subsetorSelect" onchange="changeSubsetor()" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; background: white;">
             <option value="">Primeiro selecione uma subsecretaria</option>
           </select>
+        </div>
+        <div>
+          <label for="phaseFilterButton" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+            Filtre por etapas:
+          </label>
+          <div class="phase-filter" id="phaseFilter">
+            <button type="button" id="phaseFilterButton" class="phase-filter-button" aria-expanded="false" aria-controls="phaseFilterMenu">Todas as etapas</button>
+            <div id="phaseFilterMenu" class="phase-filter-menu" role="group" aria-label="Etapas concluídas">
+              <label class="phase-filter-option"><input type="checkbox" data-phase-filter="Estudos" checked> Estudos</label>
+              <label class="phase-filter-option"><input type="checkbox" data-phase-filter="Consulta Pública" checked> Consulta Pública</label>
+              <label class="phase-filter-option"><input type="checkbox" data-phase-filter="TCU" checked> TCU</label>
+              <label class="phase-filter-option"><input type="checkbox" data-phase-filter="Edital" checked> Edital</label>
+              <label class="phase-filter-option"><input type="checkbox" data-phase-filter="Leilão" checked> Leilão</label>
+              <label class="phase-filter-option"><input type="checkbox" data-phase-filter="Contrato" checked> Contrato</label>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -586,6 +618,7 @@
     let favorites = [];
     let currentSubsetor = '';
     let currentSubsecretaria = '';
+    let selectedPhases = new Set(phaseCols.map(([phaseName]) => phaseName));
     let subsetores = [];
     let subsecretarias = [];
     let modalProjects = [];
@@ -619,6 +652,7 @@
       await loadFavorites();
       await loadProjects();
       setupSubsetorSelector();
+      setupPhaseFilter();
       // Não chamar changeSubsetor automaticamente - aguardar seleção do usuário
     });
 
@@ -665,6 +699,45 @@
       
       subsecretariaSelector.addEventListener('change', changeSubsecretaria);
       subsetorSelector.addEventListener('change', changeSubsetor);
+    }
+
+    function setupPhaseFilter() {
+      const filter = document.getElementById('phaseFilter');
+      const button = document.getElementById('phaseFilterButton');
+      const checkboxes = $$('[data-phase-filter]', filter);
+
+      button.addEventListener('click', () => {
+        const isOpen = filter.classList.toggle('is-open');
+        button.setAttribute('aria-expanded', String(isOpen));
+      });
+
+      checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+          selectedPhases = new Set(
+            checkboxes.filter(input => input.checked).map(input => input.dataset.phaseFilter)
+          );
+          updatePhaseFilterButton();
+          if (currentSubsetor) renderSubsetorContent();
+        });
+      });
+
+      document.addEventListener('click', event => {
+        if (!filter.contains(event.target)) {
+          filter.classList.remove('is-open');
+          button.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+
+    function updatePhaseFilterButton() {
+      const button = document.getElementById('phaseFilterButton');
+      if (selectedPhases.size === phaseCols.length) {
+        button.textContent = 'Todas as etapas';
+      } else if (selectedPhases.size === 0) {
+        button.textContent = 'Nenhuma etapa selecionada';
+      } else {
+        button.textContent = `${selectedPhases.size} etapa${selectedPhases.size > 1 ? 's' : ''} selecionada${selectedPhases.size > 1 ? 's' : ''}`;
+      }
     }
 
     function changeSubsecretaria() {
@@ -732,6 +805,14 @@
       // Aplicar filtro adicional de subsecretaria se selecionada
       if (currentSubsecretaria) {
         subsetorProjects = subsetorProjects.filter(p => p.subsecretaria === currentSubsecretaria);
+      }
+
+      // O filtro segue a última etapa concluída, o mesmo critério dos indicadores.
+      if (selectedPhases.size !== phaseCols.length) {
+        subsetorProjects = subsetorProjects.filter(project => {
+          const lastIdx = lastCompletedIdx(project);
+          return lastIdx >= 0 && selectedPhases.has(phaseCols[lastIdx][0]);
+        });
       }
       
       // Calcular estatísticas do subsetor completo (mesmo para todas as folhas)
