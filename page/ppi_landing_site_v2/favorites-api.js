@@ -43,28 +43,32 @@
   }
 
   async function loadFavorites() {
+    const local = loadLocalFavorites();
     const remote = await fetchRemote('GET');
     if (Array.isArray(remote)) {
-      return saveLocalFavorites(remote);
+      // O fallback de arquivo do ambiente serverless não é persistente. Mantemos os
+      // favoritos do navegador e incorporamos os que eventualmente vierem do servidor.
+      return saveLocalFavorites([...new Set([...local, ...remote])]);
     }
-    return loadLocalFavorites();
+    return local;
   }
 
   async function setFavorite(guid, add) {
+    const current = loadLocalFavorites();
+    const updated = add
+      ? [...new Set([...current, guid])]
+      : current.filter(item => item !== guid);
+
+    // Atualiza imediatamente no navegador, para que vários cliques em corações
+    // sejam preservados mesmo quando o armazenamento remoto não estiver configurado.
+    saveLocalFavorites(updated);
+
     const remote = await fetchRemote(add ? 'POST' : 'DELETE', { guid });
     if (Array.isArray(remote)) {
-      return saveLocalFavorites(remote);
+      const merged = [...new Set([...updated, ...remote])];
+      return saveLocalFavorites(add ? merged : merged.filter(item => item !== guid));
     }
-
-    const current = loadLocalFavorites();
-    const index = current.indexOf(guid);
-    if (add && index === -1) {
-      current.push(guid);
-    }
-    if (!add && index !== -1) {
-      current.splice(index, 1);
-    }
-    return saveLocalFavorites(current);
+    return updated;
   }
 
   async function clearFavorites() {
