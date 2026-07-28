@@ -390,7 +390,8 @@
           </label>
           <div class="phase-filter" id="phaseFilter">
             <button type="button" id="phaseFilterButton" class="phase-filter-button" aria-expanded="false" aria-controls="phaseFilterMenu">Todas as etapas</button>
-            <div id="phaseFilterMenu" class="phase-filter-menu" role="group" aria-label="Etapas concluídas">
+            <div id="phaseFilterMenu" class="phase-filter-menu" role="group" aria-label="Etapas dos projetos">
+              <label class="phase-filter-option"><input type="checkbox" data-phase-filter="Não iniciados" checked> Não iniciados</label>
               <label class="phase-filter-option"><input type="checkbox" data-phase-filter="Estudos" checked> Estudos</label>
               <label class="phase-filter-option"><input type="checkbox" data-phase-filter="Consulta Pública" checked> Consulta Pública</label>
               <label class="phase-filter-option"><input type="checkbox" data-phase-filter="TCU" checked> TCU</label>
@@ -618,7 +619,8 @@
     let favorites = [];
     let currentSubsetor = '';
     let currentSubsecretaria = '';
-    let selectedPhases = new Set(phaseCols.map(([phaseName]) => phaseName));
+    const notStartedPhase = 'Não iniciados';
+    let selectedPhases = new Set([notStartedPhase, ...phaseCols.map(([phaseName]) => phaseName)]);
     let subsetores = [];
     let subsecretarias = [];
     let modalProjects = [];
@@ -731,7 +733,7 @@
 
     function updatePhaseFilterButton() {
       const button = document.getElementById('phaseFilterButton');
-      if (selectedPhases.size === phaseCols.length) {
+      if (selectedPhases.size === phaseCols.length + 1) {
         button.textContent = 'Todas as etapas';
       } else if (selectedPhases.size === 0) {
         button.textContent = 'Nenhuma etapa selecionada';
@@ -808,10 +810,11 @@
       }
 
       // O filtro segue a última etapa concluída, o mesmo critério dos indicadores.
-      if (selectedPhases.size !== phaseCols.length) {
+      if (selectedPhases.size !== phaseCols.length + 1) {
         subsetorProjects = subsetorProjects.filter(project => {
           const lastIdx = lastCompletedIdx(project);
-          return lastIdx >= 0 && selectedPhases.has(phaseCols[lastIdx][0]);
+          if (lastIdx < 0) return selectedPhases.has(notStartedPhase);
+          return selectedPhases.has(phaseCols[lastIdx][0]);
         });
       }
       
