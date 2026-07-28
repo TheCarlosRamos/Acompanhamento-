@@ -367,7 +367,7 @@
 
   <div class="subsetor-selector">
     <div class="header__inner">
-      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; align-items: end;">
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items: end;">
         <div>
           <label for="subsecretariaSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
             Selecione a Subsecretaria:
@@ -399,15 +399,6 @@
               <label class="phase-filter-option"><input type="checkbox" data-phase-filter="Leilão" checked> Leilão</label>
               <label class="phase-filter-option"><input type="checkbox" data-phase-filter="Contrato" checked> Contrato</label>
             </div>
-          </div>
-        </div>
-        <div>
-          <label for="favoriteFilterButton" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
-            Selecione os favoritos:
-          </label>
-          <div class="phase-filter" id="favoriteFilter">
-            <button type="button" id="favoriteFilterButton" class="phase-filter-button" aria-expanded="false" aria-controls="favoriteFilterMenu" disabled>Nenhum favorito disponível</button>
-            <div id="favoriteFilterMenu" class="phase-filter-menu" role="group" aria-label="Projetos favoritos"></div>
           </div>
         </div>
       </div>
@@ -630,7 +621,7 @@
     let currentSubsecretaria = '';
     const notStartedPhase = 'Não iniciados';
     let selectedPhases = new Set([notStartedPhase, ...phaseCols.map(([phaseName]) => phaseName)]);
-    let selectedFavoriteGuids = new Set();
+    let favoriteUpdateQueue = Promise.resolve();
     let subsetores = [];
     let subsecretarias = [];
     let modalProjects = [];
@@ -665,7 +656,6 @@
       await loadProjects();
       setupSubsetorSelector();
       setupPhaseFilter();
-      setupFavoriteFilter();
       // Não chamar changeSubsetor automaticamente - aguardar seleção do usuário
     });
 
@@ -753,74 +743,6 @@
       }
     }
 
-    function setupFavoriteFilter() {
-      const filter = document.getElementById('favoriteFilter');
-      const button = document.getElementById('favoriteFilterButton');
-
-      button.addEventListener('click', () => {
-        if (button.disabled) return;
-        const isOpen = filter.classList.toggle('is-open');
-        button.setAttribute('aria-expanded', String(isOpen));
-      });
-
-      document.addEventListener('click', event => {
-        if (!filter.contains(event.target)) {
-          filter.classList.remove('is-open');
-          button.setAttribute('aria-expanded', 'false');
-        }
-      });
-    }
-
-    function updateFavoriteFilter() {
-      const filter = document.getElementById('favoriteFilter');
-      const button = document.getElementById('favoriteFilterButton');
-      const menu = document.getElementById('favoriteFilterMenu');
-      const availableFavorites = allProjects.filter(project =>
-        project.subsetor === currentSubsetor &&
-        project.subsecretaria === currentSubsecretaria &&
-        favorites.includes(project.guid)
-      );
-
-      selectedFavoriteGuids = new Set(availableFavorites.map(project => project.guid));
-      filter.classList.remove('is-open');
-      button.setAttribute('aria-expanded', 'false');
-
-      if (availableFavorites.length === 0) {
-        menu.innerHTML = '';
-        button.textContent = 'Nenhum favorito disponível';
-        button.disabled = true;
-        return;
-      }
-
-      menu.innerHTML = availableFavorites.map(project => {
-        const name = project.nome_completo || project.nome_projeto || 'Projeto';
-        return `<label class="phase-filter-option"><input type="checkbox" data-favorite-filter="${project.guid}" checked> ${esc(name)}</label>`;
-      }).join('');
-      button.disabled = false;
-      updateFavoriteFilterButton(availableFavorites.length);
-
-      $$('[data-favorite-filter]', menu).forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-          selectedFavoriteGuids = new Set(
-            $$('[data-favorite-filter]', menu).filter(input => input.checked).map(input => input.dataset.favoriteFilter)
-          );
-          updateFavoriteFilterButton(availableFavorites.length);
-          if (currentSubsetor) renderSubsetorContent();
-        });
-      });
-    }
-
-    function updateFavoriteFilterButton(totalFavorites) {
-      const button = document.getElementById('favoriteFilterButton');
-      if (selectedFavoriteGuids.size === totalFavorites) {
-        button.textContent = 'Todos os favoritos';
-      } else if (selectedFavoriteGuids.size === 0) {
-        button.textContent = 'Nenhum favorito selecionado';
-      } else {
-        button.textContent = `${selectedFavoriteGuids.size} favorito${selectedFavoriteGuids.size > 1 ? 's' : ''} selecionado${selectedFavoriteGuids.size > 1 ? 's' : ''}`;
-      }
-    }
-
     function changeSubsecretaria() {
       const subsecretariaSelector = document.getElementById('subsecretariaSelect');
       const subsetorSelector = document.getElementById('subsetorSelect');
@@ -832,7 +754,6 @@
         // Se nenhuma subsecretaria selecionada, desabilitar subsetor
         subsetorSelector.innerHTML = '<option value="">Primeiro selecione uma subsecretaria</option>';
         subsetorSelector.disabled = true;
-        updateFavoriteFilter();
         showEmpty();
         return;
       }
@@ -861,7 +782,6 @@
         subsetorSelector.value = availableSubsetores[0];
         changeSubsetor();
       } else {
-        updateFavoriteFilter();
         showEmpty();
       }
     }
@@ -872,12 +792,10 @@
       currentSubsetor = subsetorSelector.value;
       
       if (!currentSubsetor) {
-        updateFavoriteFilter();
         showEmpty();
         return;
       }
       
-      updateFavoriteFilter();
       renderSubsetorContent();
     }
 
@@ -955,9 +873,7 @@
       }
       
       // Adicionar folha de favoritos se houver projetos favoritados neste subsetor
-      const subsetorFavorites = subsetorProjects.filter(p =>
-        favorites.includes(p.guid) && selectedFavoriteGuids.has(p.guid)
-      );
+      const subsetorFavorites = subsetorProjects.filter(p => favorites.includes(p.guid));
       if (subsetorFavorites.length > 0) {
         // Criar uma folha para cada projeto favorito com o card completo
         subsetorFavorites.forEach((project, index) => {
@@ -1171,13 +1087,13 @@
     }
 
     // Função para alternar favoritos
-    async function toggleFavorite(guid) {
-      const isFavorite = favorites.includes(guid);
-      favorites = await window.favoritesApi.setFavorite(guid, !isFavorite);
-      if (currentSubsetor) {
-        updateFavoriteFilter();
-        renderSubsetorContent();
-      }
+    function toggleFavorite(guid) {
+      favoriteUpdateQueue = favoriteUpdateQueue.catch(() => {}).then(async () => {
+        const isFavorite = favorites.includes(guid);
+        favorites = await window.favoritesApi.setFavorite(guid, !isFavorite);
+        if (currentSubsetor) renderSubsetorContent();
+      });
+      return favoriteUpdateQueue;
     }
 
     // Função para abrir modal de detalhes do projeto
