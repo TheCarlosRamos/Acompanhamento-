@@ -77,7 +77,7 @@ pip install requests pandas
 
 A aplicação pode ser atualizada mantendo a planilha Excel na raiz do repositório. O fluxo esperado é:
 
-1. Substitua ou atualize o arquivo `Planilha Modelo setembro25.xlsx` na raiz.
+1. Substitua ou atualize o arquivo `Planilha para SIEC 29_07_26.xlsx` na raiz.
 2. Mantenha a estrutura de colunas da planilha.
 3. Rode:
 
@@ -93,11 +93,8 @@ O script lê a aba `Planilha` por padrão, aceita tanto os cabeçalhos com os c�
 
 Durante a conversão, o script também limpa HTML dos campos de descrição e textos longos, removendo tags como `<ul>`, `<li>`, `<p>` e convertendo listas para texto legível.
 
-Se existir `projects_full.xlsx` na raiz, ela será usada automaticamente como planilha complementar para atualizar estes campos quando houver correspondência pelo nome do projeto:
+Se existir `projects_full.xlsx` na raiz, ela será usada automaticamente como planilha complementar apenas para coordenadas, quando houver correspondência pelo nome do projeto:
 
-- `Situação Atual` recebe `Status Atual do Projeto`
-- `Próximos Passos` recebe `Próximas Etapas`
-- `Pontos de Atenção` recebe `Questões Chaves`
 - `Localização no mapa` recebe `Latitude` e `Longitude`
 
 Os HTMLs continuam consumindo `projects_full.json` e `metrics.json`; por isso não é necessário alterar o frontend a cada nova planilha.

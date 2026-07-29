@@ -18,7 +18,7 @@ except ImportError as exc:
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_EXCEL = ROOT / "Planilha Modelo setembro25.xlsx"
+DEFAULT_EXCEL = ROOT / "Planilha para SIEC 29_07_26.xlsx"
 DEFAULT_COMPLEMENT = ROOT / "projects_full.xlsx"
 PROJECTS_JSON = ROOT / "page" / "ppi_landing_site_v2" / "data" / "projects_full.json"
 METRICS_JSON = ROOT / "page" / "ppi_landing_site_v2" / "data" / "metrics.json"
@@ -88,6 +88,36 @@ BASE_ALIASES = {
     "custo_estimado": ["vl_estimadosdivulgados_potenciais", "numero_capex", "custo_estimado"],
 }
 
+FIELD_ALIASES.update(
+    {
+        "subsecretaria": FIELD_ALIASES["subsecretaria"] + ["Secretaria SPPI"],
+        "status_atual_do_projeto": FIELD_ALIASES["status_atual_do_projeto"] + ["Situacao Atual do Projeto", "SITUAÇÃO ATUAL DO PROJETO"],
+        "questoes_chaves": FIELD_ALIASES["questoes_chaves"] + ["Pontos de Atencao Projeto", "PONTOS DE ATENÇÃO PROJETO"],
+        "proximas_etapas": FIELD_ALIASES["proximas_etapas"] + ["Proximos Passos", "PRÓXIMOS PASSOS"],
+        "status_dos_estudos": FIELD_ALIASES["status_dos_estudos"] + ["ESTUDO"],
+        "status_consulta_publica": FIELD_ALIASES["status_consulta_publica"] + ["CONSULTA PÚBLICA"],
+        "status_do_tcu": FIELD_ALIASES["status_do_tcu"] + ["ORGAOS DE CONTROLE", "ÓRGÃOS DE CONTROLE"],
+        "status_do_edital": FIELD_ALIASES["status_do_edital"] + ["Publicacao EDITAL/ Parecer", "Publicação EDITAL/  Parecer"],
+        "status_do_leilao": FIELD_ALIASES["status_do_leilao"] + ["LEILAO", "LEILÃO", "leilao (agendado/estimado/leiloado)", "leilão (agendado/estimado/leiloado)"],
+        "status_do_contrato": FIELD_ALIASES["status_do_contrato"] + ["CONTRATO LICENCA AMBIENTAL HOMOLOGACAO DO LEILAO", "CONTRATO / \nLICENÇA AMBIENTAL / \nHOMOLOGAÇÃO DO LEILÃO"],
+        "descricao_do_projeto": FIELD_ALIASES["descricao_do_projeto"] + ["INFORMACOES DO PROJETO", "INFORMAÇÕES DO PROJETO"],
+    }
+)
+
+BASE_ALIASES.update(
+    {
+        "id": BASE_ALIASES["id"] + ["#", "#site"],
+        "nome_completo": BASE_ALIASES["nome_completo"] + ["Empreendimento"],
+        "descricao_curta": BASE_ALIASES["descricao_curta"] + ["INFORMACOES DO PROJETO", "INFORMAÇÕES DO PROJETO"],
+        "setor": BASE_ALIASES["setor"] + ["setor site"],
+        "subsetor": BASE_ALIASES["subsetor"] + ["subsetor site"],
+        "organizacao": BASE_ALIASES["organizacao"] + ["Secretaria SPPI"],
+        "status_atividade": BASE_ALIASES["status_atividade"] + ["STATUS PROJETO"],
+        "custo_estimado": BASE_ALIASES["custo_estimado"] + ["CAPEX Estimados"],
+        "custo_original": ["numero_opex", "custo_original", "OPEX Estimados"],
+    }
+)
+
 PHASE_FIELDS = {
     "estudo": "status_dos_estudos",
     "estudos": "status_dos_estudos",
@@ -121,6 +151,8 @@ def clean_value(value):
     if isinstance(value, str):
         value = value.replace("_x000D_", "\n")
         value = re.sub(r"[ \t]+", " ", value.replace("\r\n", "\n").replace("\r", "\n")).strip()
+        if value.upper() in {"#N/A", "N/A", "NA", "#VALOR!", "#VALUE!"}:
+            return None
         return value or None
     return value
 
@@ -286,12 +318,6 @@ def apply_complement(projects, complement_by_title, complement_stats):
             continue
         matched += 1
 
-        for field in ["status_atual_do_projeto", "questoes_chaves", "proximas_etapas"]:
-            value = complement.get(field)
-            if value not in (None, ""):
-                project[field] = value
-                updated[field] += 1
-
         lat = complement.get("latitude")
         lon = complement.get("longitude")
         if lat is not None and lon is not None:
@@ -369,6 +395,7 @@ def build_projects(excel_path, sheet_name=None, complement_path=None):
                 "endereco_principal": first_present(row, BASE_ALIASES["uf"], header_map),
                 "custo_estimado": number_or_none(first_present(row, BASE_ALIASES["custo_estimado"], header_map)),
                 "moeda": "BRL" if number_or_none(first_present(row, BASE_ALIASES["custo_estimado"], header_map)) is not None else None,
+                "custo_original": number_or_none(first_present(row, BASE_ALIASES["custo_original"], header_map)),
                 "status_atividade": first_present(row, BASE_ALIASES["status_atividade"], header_map),
                 "uf": first_present(row, BASE_ALIASES["uf"], header_map),
                 "permalink": first_present(row, BASE_ALIASES["permalink"], header_map),
