@@ -41,10 +41,10 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Adiciona apenas os arquivos JSON de dados gerados
-          git add page/ppi_landing_site_v2/data/projects_full.json \
-                  page/ppi_landing_site_v2/data/metrics.json \
-                  projetos_completos.json
+          # Adiciona os arquivos JSON de dados gerados (usa -f para forçar a inclusão pois a pasta data/ está listada no .gitignore)
+          git add -f page/ppi_landing_site_v2/data/projects_full.json \
+                     page/ppi_landing_site_v2/data/metrics.json \
+                     projetos_completos.json
           
           # Se houver mudanças, commita e envia de volta ao repositório
           if git diff --cached --quiet; then
