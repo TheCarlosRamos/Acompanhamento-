@@ -2,11 +2,11 @@
   "metadados": {
     "total_projetos": 804,
     "total_colunas": 34,
-    "data_geracao": "2026-07-31 08:59:43",
+    "data_geracao": "2026-07-31 12:17:33",
     "fonte": "Planilha para SIEC 29_07_26.xlsx",
     "aba": "Planilha1",
     "complemento": {
-      "path": "C:\\Users\\carlos.ramos\\OneDrive - Presidência da República\\Documentos\\Painel-Projetos\\projects_full.xlsx",
+      "path": "/home/runner/work/Acompanhamento-/Acompanhamento-/projects_full.xlsx",
       "rows": 268,
       "matched": 177,
       "updated": {
