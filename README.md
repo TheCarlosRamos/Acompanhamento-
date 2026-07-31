@@ -73,77 +73,94 @@ pip install requests pandas
 
 ### 1. Atualizar Dados dos Projetos
 
-#### Atualizar pela planilha Excel da raiz
+#### ⚡ Fluxo Automático via GitHub Actions (Recomendado)
 
-A aplicação pode ser atualizada mantendo a planilha Excel na raiz do repositório. O fluxo esperado é:
+O projeto está configurado com uma Action no GitHub que automatiza todo o processo de processamento de dados e deploy na Vercel a cada push na branch `main`. **Você não precisa rodar scripts localmente**.
 
-1. Substitua ou atualize o arquivo `Planilha para SIEC 29_07_26.xlsx` na raiz.
-2. Mantenha a estrutura de colunas da planilha.
-3. Rode:
+O fluxo recomendado é:
 
-```bash
-python scripts/update_data_from_excel.py
-```
+1. **Atualize a Planilha**: Substitua ou adicione um novo arquivo de planilha Excel na raiz do repositório. O nome deve seguir o padrão `Planilha para SIEC *.xlsx` (ex: `Planilha para SIEC 30_08_26.xlsx`). O script detectará automaticamente o arquivo mais recente.
+2. **Preservação de Coordenadas**: Garanta que o arquivo `projects_full.xlsx` permaneça na raiz. O script o utilizará como planilha complementar para restaurar as coordenadas (latitude e longitude) dos projetos correspondentes.
+3. **Commit e Push**: Envie a nova planilha para o GitHub:
+   ```bash
+   git add "Planilha para SIEC *.xlsx"
+   git commit -m "update: adiciona nova planilha de projetos"
+   git push origin main
+   ```
+4. **Execução Automática**:
+   * A GitHub Action será disparada.
+   * Ela executará o script de conversão (`scripts/update_data_from_excel.py`).
+   * Se houver mudanças nos dados dos projetos, ela gerará os novos arquivos JSON (`page/ppi_landing_site_v2/data/projects_full.json`, `page/ppi_landing_site_v2/data/metrics.json` e `projetos_completos.json`) e os comitará de volta no repositório de forma automática.
+   * **Deploy Automático**: A Vercel (conectada ao GitHub) detectará o novo commit dos dados gerados e iniciará o deploy do site atualizado imediatamente.
 
-O script lê a aba `Planilha` por padrão, aceita tanto os cabeçalhos com os códigos `2000720`, `2000726`, `2000727`, `2000728`, `2001218`, `2001221`, `2001224`, `2001226`, `2001229`, `2001230`, `2001232` quanto os nomes equivalentes da planilha atual, e atualiza:
+---
 
-- `page/ppi_landing_site_v2/data/projects_full.json`
-- `page/ppi_landing_site_v2/data/metrics.json`
-- `projetos_completos.json`
+#### 💻 Fluxo Manual (Local)
 
-Durante a conversão, o script também limpa HTML dos campos de descrição e textos longos, removendo tags como `<ul>`, `<li>`, `<p>` e convertendo listas para texto legível.
+Caso queira processar os dados e testar a aplicação localmente antes de enviar ao GitHub:
 
-Se existir `projects_full.xlsx` na raiz, ela será usada automaticamente como planilha complementar apenas para coordenadas, quando houver correspondência pelo nome do projeto:
+1. Coloque a planilha principal na raiz do projeto (ex: `Planilha para SIEC 29_07_26.xlsx`).
+2. Execute o script de atualização:
+   ```bash
+   python scripts/update_data_from_excel.py
+   ```
+   * **Busca Dinâmica**: O script tenta ler o arquivo `Planilha para SIEC 29_07_26.xlsx`. Se ele não existir, o script busca automaticamente qualquer arquivo na raiz que case com o padrão `Planilha para SIEC *.xlsx` (usando o mais recente). Se não encontrar, busca qualquer outro arquivo `.xlsx` (exceto `projects_full.xlsx` e `Planilha Modelo setembro25.xlsx`).
+   * **Coordenadas**: O script lê automaticamente o arquivo `projects_full.xlsx` na raiz como planilha complementar de coordenadas para preencher a latitude/longitude dos projetos.
 
-- `Localização no mapa` recebe `Latitude` e `Longitude`
+O script atualiza os seguintes arquivos locais:
+* `page/ppi_landing_site_v2/data/projects_full.json` (dados detalhados de cada projeto)
+* `page/ppi_landing_site_v2/data/metrics.json` (estatísticas para o painel)
+* `projetos_completos.json` (backup estruturado completo)
 
-Os HTMLs continuam consumindo `projects_full.json` e `metrics.json`; por isso não é necessário alterar o frontend a cada nova planilha.
+##### Parâmetros do Script (Opcional)
 
-Se a planilha tiver outro nome ou outra aba:
+* Especificar outra planilha principal:
+  ```bash
+  python scripts/update_data_from_excel.py --excel "minha_planilha.xlsx" --sheet "NomeDaAba"
+  ```
+* Especificar outra planilha de coordenadas/complemento:
+  ```bash
+  python scripts/update_data_from_excel.py --complement "outro_complemento.xlsx"
+  ```
+* Ignorar o uso de planilha de coordenadas (não recomendado, remove as coordenadas do JSON):
+  ```bash
+  python scripts/update_data_from_excel.py --no-complement
+  ```
+* Evitar criação de backups locais (útil no CI/Actions):
+  ```bash
+  python scripts/update_data_from_excel.py --no-backup
+  ```
 
-```bash
-python scripts/update_data_from_excel.py --excel "minha_planilha.xlsx" --sheet "Planilha"
-```
+---
 
-Para informar outra planilha complementar:
+#### 🌐 Atualizar pela API Antiga (SIF-Source)
 
-```bash
-python scripts/update_data_from_excel.py --complement "projects_full.xlsx"
-```
-
-Para ignorar a planilha complementar:
-
-```bash
-python scripts/update_data_from_excel.py --no-complement
-```
-
-#### Atualizar pela API antiga
-
-Para atualizar todos os projetos pela coleta da API (278 projetos):
+Caso queira forçar a coleta direta da API antiga (278 projetos):
 ```bash
 cd scripts
 python update_all_complete.py
 ```
+Este script lê os GUIDs de `projects.csv`, faz requisições paralelas à API externa, consolida as informações e atualiza `projects_full.json`.
 
-Este script:
-- Lê todos os GUIDs do `projects.csv`
-- Faz chamadas à API em paralelo
-- Consolida os dados
-- Atualiza o `projects_full.json`
+---
 
 ### 2. Executar Aplicação Web Local
 
+Para visualizar a aplicação e testar as mudanças localmente:
 ```bash
 # Servir os arquivos estáticos
 cd page/ppi_landing_site_v2
 python -m http.server 8000
 ```
+Acesse no navegador: `http://localhost:8000`
 
-Acesse: `http://localhost:8000`
+---
 
-### 3. Deploy
+### 3. Deploy na Vercel
 
-O projeto está configurado para deploy na Vercel através do `vercel.json`.
+O deploy da aplicação web é realizado na Vercel de forma automática em **https://deploy-omega-five-39.vercel.app/**.
+A configuração das rotas e caminhos estáticos da aplicação está descrita no arquivo `vercel.json` na raiz do projeto.
+
 
 ## 📊 Fonte de Dados
 
