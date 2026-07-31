@@ -3,7 +3,7 @@ name: Update Data and Deploy
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - '.github/**'
       - 'README.md'
@@ -52,7 +52,7 @@ jobs:
           else
             # Usa [skip ci] para impedir que este commit automático dispare o GitHub Actions novamente
             git commit -m "[skip ci] Auto-update project data from Excel"
-            git push origin master
+            git push origin main
           fi
 
       - name: Deploy to Vercel (Optional CLI fallback)
