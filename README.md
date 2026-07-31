@@ -8,25 +8,29 @@ Painel de visualização de projetos do Programa de Parcerias e Investimentos (P
 
 ```
 Painel-Projetos/
+├── .github/                        # Configurações do GitHub Actions
+│   └── workflows/
+│       └── update_and_deploy.yml   # Workflow de automação (atualização + deploy)
 ├── page/                           # Aplicação web principal
 │   ├── ppi_landing_site_v2/       # Site de visualização
 │   │   ├── data/                  # Dados dos projetos
-│   │   │   └── projects_full.json # Base de dados principal
+│   │   │   ├── projects_full.json # Base de dados gerada principal
+│   │   │   └── metrics.json       # Métricas consolidadas
 │   │   ├── index.html             # Página principal
 │   │   └── assets/                # CSS, JS e imagens
 │   └── ppi_landing_site_v2.pdf    # Versão PDF
 ├── scripts/                        # Scripts de processamento de dados
+│   ├── update_data_from_excel.py  # Script principal de processamento do Excel
 │   ├── api_automation_urls.py     # Script de referência da API
 │   ├── project_info_api.py        # Coleta de informações básicas
 │   ├── consolidate_project_data.py # Consolidação de dados
-│   ├── update_all_complete.py     # Script unificado principal
-│   ├── projects.csv               # Lista de todos os projetos (278 GUIDs)
-│   ├── project_guids.csv          # Lista reduzida (3 GUIDs)
-│   └── project_info_responses/    # Respostas da API
-├── mapas/                         # Arquivos de mapas
-├── Qcode/                         # Notebooks e análises
+│   ├── update_all_complete.py     # Script unificado antigo da API
+│   └── projects.csv               # Lista de projetos (GUIDs)
+├── Planilha para SIEC 29_07_26.xlsx # Planilha principal de entrada (exemplo)
+├── projects_full.xlsx              # Planilha complementar de coordenadas
 └── README.md                      # Este arquivo
 ```
+
 
 ## 🚀 Funcionalidades
 
@@ -164,52 +168,39 @@ A configuração das rotas e caminhos estáticos da aplicação está descrita n
 
 ## 📊 Fonte de Dados
 
-### API Principal
-- **URL Base**: `https://api.sif-source.org`
-- **Endpoint Projects**: `/projects`
-- **Endpoint Questions**: `/projects/{guid}/questions/{question_id}`
+### 1. Planilha Principal (SIEC)
+A principal fonte de dados é a planilha no formato `Planilha para SIEC *.xlsx` adicionada à raiz do projeto. O script de conversão mapeia dinamicamente os seguintes cabeçalhos principais:
+- **Título**: `Empreendimento`, `nome_completo`, `título`, `Title`
+- **Descrição**: `INFORMAÇÕES DO PROJETO`, `descrição curta`, `descricao_curta`
+- **Setores**: `setor site`, `setor`, `Setores`
+- **Subsetores**: `subsetor site`, `subsetor`, `Subsetores`
+- **Organização**: `Secretaria SPPI`, `orgaos_envolvidos`
+- **Custo capeado**: `CAPEX Estimados`, `custo_estimado`, `vl_estimadosdivulgados_potenciais`
+- **Custo opex**: `OPEX Estimados`, `custo_original`, `numero_opex`
+- **Status Geral**: `STATUS PROJETO`, `projeto_ativo`, `status_atividade`
 
-### Estrutura dos Dados
-```json
-{
-  "guid": "uuid",
-  "nome_projeto": "string",
-  "descricao_curta": "string",
-  "setor": "string",
-  "subsetor": "string",
-  "organizacao": "string",
-  "localizacoes": "string",
-  "latitude": number,
-  "longitude": number,
-  "status_atual_do_projeto": "string",
-  "questoes_chaves": "string",
-  "status_dos_estudos": "string",
-  "status_consulta_publica": "string",
-  "status_do_tcu": "string",
-  "status_do_edital": "string",
-  "status_do_leilao": "string",
-  "status_do_contrato": "string"
-}
-```
+### 2. Planilha de Coordenadas (Complemento)
+O arquivo `projects_full.xlsx` funciona como base complementar permanente. O script faz o casamento dos projetos pelo nome e atualiza as chaves geográficas:
+- `latitude` (ex: `-22.25`)
+- `longitude` (ex: `-42.5`)
+
+---
 
 ## 🚨 Considerações Importantes
 
-### Segurança
-- As credenciais da API estão hardcoded nos scripts
-- Recomenda-se mover para variáveis de ambiente
-- Considerar uso de `.env` file
+### Processamento do Script
+- O script `update_data_from_excel.py` realiza a limpeza de tags HTML das descrições para garantir uma exibição limpa no Painel.
+- O backup dos arquivos locais é gerado com a extensão `.bak-[data-hora]` ao rodar localmente. No GitHub Actions, o parâmetro `--no-backup` é utilizado para manter o repositório enxuto.
 
-### Performance
-- Processamento paralelo com `ThreadPoolExecutor`
-- Timeout configurado para chamadas API
-- Tratamento de erros 500 da API
+---
 
+## 📈 Estatísticas Atuais (Base de Dados)
 
-## 📈 Estatísticas Atuais
+Os dados gerados a partir da planilha mais recente possuem as seguintes métricas principais (consolidadas em `metrics.json`):
+- **Total de projetos processados**: 804
+- **Projetos geolocalizados (com coordenadas)**: 174
+- **Setores Principais**: Energia, Transportes, Infraestrutura Urbana, Saneamento, Meio Ambiente, Turismo, Mineração, etc.
+- **Responsáveis (Subsecretarias)**: SIEC, SEPPI, SIPE, etc.
 
-- **Total de projetos**: 278
-- **Setores**: Transport, Energy, Urban Services, Water & Waste
-- **Organizações**: SEPPI, SIEC, SIPE
-- **Status**: Multiple (Completed, Not Started, Scheduled, etc.)
 
 
