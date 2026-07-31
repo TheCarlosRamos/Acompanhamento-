@@ -522,8 +522,24 @@ def main():
     excel_path = Path(args.excel)
     if not excel_path.is_absolute():
         excel_path = ROOT / excel_path
+
     if not excel_path.exists():
-        raise SystemExit(f"Planilha nao encontrada: {excel_path}")
+        # Busca dinâmica na raiz por "Planilha para SIEC *.xlsx"
+        matches = list(ROOT.glob("Planilha para SIEC *.xlsx"))
+        if not matches:
+            # Fallback para qualquer xlsx exceto complement e modelo antigo
+            all_xlsx = list(ROOT.glob("*.xlsx"))
+            matches = [
+                p for p in all_xlsx
+                if p.name not in ("projects_full.xlsx", "Planilha Modelo setembro25.xlsx")
+            ]
+        if matches:
+            # Ordena por data de modificação decrescente (mais recente primeiro)
+            matches.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+            excel_path = matches[0]
+            print(f"Planilha padrão não encontrada. Utilizando arquivo detectado dinamicamente: {excel_path.name}")
+        else:
+            raise SystemExit(f"Planilha nao encontrada: {excel_path}")
 
     complement_path = None
     if not args.no_complement:

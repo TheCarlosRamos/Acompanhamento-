@@ -1,0 +1,70 @@
+name: Update Data and Deploy
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '.github/**'
+      - 'README.md'
+      - '.gitignore'
+  workflow_dispatch: # Permite execução manual via interface do GitHub
+
+permissions:
+  contents: write
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install openpyxl
+
+      - name: Run data update script
+        run: |
+          # Roda o script de atualização sem fazer backups para evitar arquivos temporários no git
+          python scripts/update_data_from_excel.py --no-backup
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Adiciona apenas os arquivos JSON de dados gerados
+          git add page/ppi_landing_site_v2/data/projects_full.json \
+                  page/ppi_landing_site_v2/data/metrics.json \
+                  projetos_completos.json
+          
+          # Se houver mudanças, commita e envia de volta ao repositório
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteração nos dados do projeto encontrada."
+          else
+            # Usa [skip ci] para impedir que este commit automático dispare o GitHub Actions novamente
+            git commit -m "[skip ci] Auto-update project data from Excel"
+            git push origin master
+          fi
+
+      - name: Deploy to Vercel (Optional CLI fallback)
+        # Executará somente se as secrets da Vercel estiverem configuradas no GitHub.
+        # Caso o Vercel esteja conectado diretamente ao GitHub, o push anterior já fará o deploy automático.
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        if: env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != ''
+        run: |
+          npm install --global vercel
+          vercel pull --yes --environment=production --token=$VERCEL_TOKEN
+          vercel build --prod --token=$VERCEL_TOKEN
+          vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
